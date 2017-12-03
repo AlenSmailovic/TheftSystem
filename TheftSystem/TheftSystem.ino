@@ -7,12 +7,12 @@
 #define LOCKED      true
 #define UNLOCKED    false
 
-#define RED_PIN     1
-#define GREEN_PIN   2
+#define RED_PIN     5
+#define GREEN_PIN   4
 #define BUZZER_PIN  3
-#define IR_PIN      4
-#define SS_PIN      5
-#define RST_PIN     6
+#define IR_PIN      2
+#define SS_PIN      10
+#define RST_PIN     9
 
 bool bSystemSecurity;
 int iEEPROMAddress = 0;
@@ -60,26 +60,81 @@ void setup() {
 }
 
 bool getSensorsStatus() {
-  return false;
+  bool bStatus = false;
+
+  delay(100);
+  int iDoorSensor = digitalRead(IR_PIN);
+  if (iDoorSensor == 1) {
+    if(DEBUG) Serial.println("The door is open!");
+    bStatus = true;
+  }
+  
+  return bStatus;
 }
 
 void StartAlarm() {
-  
+  if(DEBUG) Serial.println("Alarm started!");
+  // add code for external alarm
+  tone(BUZZER_PIN, 5000);
 }
 
 void StartAlarm_Call() {
-  
+  if(DEBUG) Serial.println("Call started!");
+  // add code using SIM900
 }
 
 void StopAlarm() {
-  
+  if(DEBUG) Serial.println("Alarm stopped!");
+  // add code for external Alarm
+  noTone(BUZZER_PIN);
 }
 
 void StopAlarm_Call() {
-  
+  if(DEBUG) Serial.println("Call stopped!");
+  // add code using SIM900
+}
+
+inline void GreenSignal() {
+  tone(BUZZER_PIN, 1000);
+  digitalWrite(GREEN_PIN, HIGH);
+  delay(1000);
+  noTone(BUZZER_PIN);
+  digitalWrite(GREEN_PIN, LOW);
+}
+
+inline void RedSignal() {
+  tone(BUZZER_PIN, 100);
+  digitalWrite(RED_PIN, HIGH);
+  delay(1000);
+  noTone(BUZZER_PIN);
+  digitalWrite(RED_PIN, LOW);
 }
 
 bool RFID_Authetificated() {
+  if (oRFID.PICC_IsNewCardPresent()) {
+    if (oRFID.PICC_ReadCardSerial()) {
+      if(DEBUG) Serial.print("UID tag :");
+      String content= "";
+      byte letter;
+      for (byte i = 0; i < oRFID.uid.size; i++) {
+         if(DEBUG) Serial.print(oRFID.uid.uidByte[i] < 0x10 ? " 0" : " ");
+         if(DEBUG) Serial.print(oRFID.uid.uidByte[i], HEX);
+         content.concat(String(oRFID.uid.uidByte[i] < 0x10 ? " 0" : " "));
+         content.concat(String(oRFID.uid.uidByte[i], HEX));
+      }
+      if(DEBUG) Serial.println("");
+      content.toUpperCase();
+      if (content.substring(1) == "99 03 72 9E") {
+        if(DEBUG) Serial.println("Authorized access");
+        GreenSignal();
+        return true;
+      } else {
+        if(DEBUG) Serial.println("Access denied");
+        RedSignal();
+        return false;
+      }
+    }
+  }
   return false;
 }
 
@@ -93,10 +148,11 @@ void SystemState_Locked() {
       StartAlarm();
       StartAlarm_Call();
       while(true) {
-        if(RFID_Authetificated() || StopMessage_Received())
+        if(RFID_Authetificated() || StopMessage_Received()) {
           StopAlarm();
           StopAlarm_Call();
           break;
+        }
       }
       bSystemSecurity = UNLOCKED;
       setEEPROMSystemState(bSystemSecurity);
@@ -113,15 +169,20 @@ void SystemState_Locked() {
 void SystemState_Unlocked() {
   while(bSystemSecurity == UNLOCKED) {
     if (RFID_Authetificated()) {
-      if (getSensorsStatus()) {
+      if(DEBUG) Serial.println("RFID success authetificated.");
+      if (!getSensorsStatus()) {
+        if(DEBUG) Serial.println("Status of the sensors: OK");
         bSystemSecurity = LOCKED;
         setEEPROMSystemState(bSystemSecurity);
         break;
       } else {
-        while (getSensorsStatus()) {
+        if(DEBUG) Serial.println("Trying to lock with sensor status: NOT OK");
+        if(DEBUG) Serial.println("Stop alarm with the key!");
+        while (!RFID_Authetificated()) {
           StartAlarm();
-          delay(1000);
+          delay(500);
           StopAlarm();
+          delay(500);
         }
       }
     }
