@@ -31,6 +31,15 @@ bool getEEPROMSystemState() {
   }
 }
 
+void setEEPROMSystemState(bool bState) {
+  EEPROM.write(iEEPROMAddress, (int)bState);
+  if (DEBUG) Serial.print("The current state of the system is: ");
+  if (!bState)
+    if (DEBUG) Serial.println("UNLOCKED");
+  if (bState)
+    if (DEBUG) Serial.println("LOCKED");
+}
+
 void setup() {
   Serial.begin(9600);
 
@@ -50,15 +59,72 @@ void setup() {
   bSystemSecurity = getEEPROMSystemState();
 }
 
+bool getSensorsStatus() {
+  return false;
+}
+
+void StartAlarm() {
+  
+}
+
+void StartAlarm_Call() {
+  
+}
+
+void StopAlarm() {
+  
+}
+
+void StopAlarm_Call() {
+  
+}
+
+bool RFID_Authetificated() {
+  return false;
+}
+
+bool StopMessage_Received() {
+  return false;
+}
+
 void SystemState_Locked() {
   while(bSystemSecurity == LOCKED) {
-    
+    if (getSensorsStatus()) {
+      StartAlarm();
+      StartAlarm_Call();
+      while(true) {
+        if(RFID_Authetificated() || StopMessage_Received())
+          StopAlarm();
+          StopAlarm_Call();
+          break;
+      }
+      bSystemSecurity = UNLOCKED;
+      setEEPROMSystemState(bSystemSecurity);
+      break;
+    }
+    if (RFID_Authetificated()) {
+      bSystemSecurity = UNLOCKED;
+      setEEPROMSystemState(bSystemSecurity);
+      break;
+    }
   }
 }
 
 void SystemState_Unlocked() {
   while(bSystemSecurity == UNLOCKED) {
-  
+    if (RFID_Authetificated()) {
+      if (getSensorsStatus()) {
+        bSystemSecurity = LOCKED;
+        setEEPROMSystemState(bSystemSecurity);
+        break;
+      } else {
+        while (getSensorsStatus()) {
+          StartAlarm();
+          delay(1000);
+          StopAlarm();
+        }
+      }
+    }
   }
 }
 
