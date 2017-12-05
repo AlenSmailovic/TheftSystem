@@ -2,7 +2,7 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
-#define DEBUG       true
+#define DEBUG       false
 
 #define LOCKED      true
 #define UNLOCKED    false
@@ -139,6 +139,7 @@ bool RFID_Authetificated() {
 }
 
 bool StopMessage_Received() {
+  // add code using SIM900
   return false;
 }
 
