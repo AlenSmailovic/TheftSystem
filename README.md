@@ -35,3 +35,6 @@ GND  -> GND
 
 SOURCE POWER : 5V 1.5A
 ```
+### Features
+- Posibility for unlock / lock with multiple RDID keys
+- Call multiple phone numbers when an incident appear
