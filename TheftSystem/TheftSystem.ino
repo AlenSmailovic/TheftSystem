@@ -1,6 +1,7 @@
 #include <EEPROM.h>
 #include <SPI.h>
 #include <MFRC522.h>
+#include <SoftwareSerial.h>
 
 #define DEBUG       false
 
@@ -13,10 +14,16 @@
 #define IR_PIN      2
 #define SS_PIN      10
 #define RST_PIN     9
+#define SIM900_RST  6
+#define SIM900_RX   7
+#define SIM900_TX   8
+
+char strPhone[13] = "+40746171700";
 
 bool bSystemSecurity;
 int iEEPROMAddress = 0;
 MFRC522 oRFID(SS_PIN, RST_PIN);
+SoftwareSerial oSIM900(SIM900_RX, SIM900_TX); 
 
 bool getEEPROMSystemState() {
   int iState = EEPROM.read(iEEPROMAddress);
@@ -42,6 +49,17 @@ void setEEPROMSystemState(bool bState) {
 
 void setup() {
   Serial.begin(9600);
+
+  //Turn on SIM900 GSM shield
+  digitalWrite(SIM900_RST, HIGH);
+  delay(1000);
+  digitalWrite(SIM900_RST, LOW);
+  delay(5000);
+  // Initialize SIM900 GSM shield
+  oSIM900.begin(19200);
+  if(DEBUG) Serial.println("SIM900 loading..");
+  delay(20000);
+  if(DEBUG) Serial.println("SIM900 logged on to network!");
 
   // Initialize RFID for lock / unlock
   SPI.begin();
@@ -79,19 +97,18 @@ void StartAlarm() {
 }
 
 void StartAlarm_Call() {
+  char buffer[20];
   if(DEBUG) Serial.println("Call started!");
-  // add code using SIM900
+  sprintf(buffer, "ATD%s;\r", strPhone);
+  if(DEBUG) Serial.println(buffer);
+  oSIM900.print(buffer); 
+  delay(3000);
 }
 
 void StopAlarm() {
   if(DEBUG) Serial.println("Alarm stopped!");
   // add code for external Alarm
   noTone(BUZZER_PIN);
-}
-
-void StopAlarm_Call() {
-  if(DEBUG) Serial.println("Call stopped!");
-  // add code using SIM900
 }
 
 inline void GreenSignal() {
@@ -138,20 +155,14 @@ bool RFID_Authetificated() {
   return false;
 }
 
-bool StopMessage_Received() {
-  // add code using SIM900
-  return false;
-}
-
 void SystemState_Locked() {
   while(bSystemSecurity == LOCKED) {
     if (getSensorsStatus()) {
       StartAlarm();
       StartAlarm_Call();
       while(true) {
-        if(RFID_Authetificated() || StopMessage_Received()) {
+        if(RFID_Authetificated()) {
           StopAlarm();
-          StopAlarm_Call();
           break;
         }
       }
