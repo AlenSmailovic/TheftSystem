@@ -28,4 +28,10 @@ RED    -> PIN5
 ```
 - GSM Shield : SIM900
 ```
+PIN7 -> PIN7
+PIN8 -> PIN8
+PIN9 -> PIN6
+GND  -> GND
+
+SOURCE POWER : 5V 1.5A
 ```
