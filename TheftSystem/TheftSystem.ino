@@ -3,7 +3,7 @@
 #include <MFRC522.h>
 #include <SoftwareSerial.h>
 
-#define DEBUG       false
+#define DEBUG       true
 
 #define LOCKED      true
 #define UNLOCKED    false
@@ -17,6 +17,9 @@
 #define SIM900_RST  6
 #define SIM900_RX   7
 #define SIM900_TX   8
+#define LIGHT_PIN   A0
+
+#define ENV_LIGHT   80
 
 char strPhone[13] = "+40746171700";
 
@@ -73,6 +76,9 @@ void setup() {
   // Initialize infrared sensor for door
   pinMode(IR_PIN, INPUT);
 
+  // Initialize light sensor for environment
+  pinMode(LIGHT_PIN, INPUT);
+
   // Get the system state from EEPROM: LOCKED / UNLOCKED
   bSystemSecurity = getEEPROMSystemState();
 }
@@ -84,6 +90,13 @@ bool getSensorsStatus() {
   int iDoorSensor = digitalRead(IR_PIN);
   if (iDoorSensor == 1) {
     if(DEBUG) Serial.println("The door is open!");
+    bStatus = true;
+  }
+
+  int iEnvironmentLight = analogRead(LIGHT_PIN);
+  if (iEnvironmentLight > ENV_LIGHT) {
+    if(DEBUG) Serial.print("Unknown light in room! Value: ");
+    if(DEBUG) Serial.println(iEnvironmentLight);
     bStatus = true;
   }
   
