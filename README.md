@@ -22,7 +22,7 @@ SDA  -> PIN10
 - Light sensor : Photorezistor + 10K
 ```
 LHT -> A0
-V+  -> 5V
+VCC -> 5V
 GND -> GND
 ```
 - Notify sensor : Buzzer + LEDs
