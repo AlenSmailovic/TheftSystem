@@ -19,6 +19,12 @@ MOSI -> PIN11
 SCK  -> PIN13
 SDA  -> PIN10
 ```
+- Light sensor : Photorezistor + 10K
+```
+LHT -> A0
+V+  -> 5V
+GND -> GND
+```
 - Notify sensor : Buzzer + LEDs
 ```
 BUZZER -> PIN3
