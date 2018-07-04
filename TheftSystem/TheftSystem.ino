@@ -21,7 +21,7 @@
 
 #define ENV_LIGHT   80
 
-char strPhone[13] = "+40746171700";
+char strPhone[13] = "+40000000000";
 
 bool bSystemSecurity;
 int iEEPROMAddress = 0;
